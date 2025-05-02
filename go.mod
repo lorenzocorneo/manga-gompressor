@@ -1,0 +1,3 @@
+module mangagompressor
+
+go 1.24.1
