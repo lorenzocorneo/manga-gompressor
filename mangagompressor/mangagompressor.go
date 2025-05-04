@@ -149,33 +149,6 @@ func getRemainingRectangles(img image.Image, rects []image.Rectangle) []image.Re
 	return remainingRects
 }
 
-// func subtractRectangles1(src image.Image, rects []image.Rectangle) []image.Rectangle {
-// 	// Create a matrix that represents the image.
-// 	page := make([][]bool, src.Bounds().Dy())
-// 	for i := range page {
-// 		page[i] = make([]bool, src.Bounds().Dx())
-// 	}
-
-// 	// Add the rectangles to the page
-// 	for _, rect := range rects {
-// 		for y := rect.Min.Y; y < rect.Max.Y; y++ {
-// 			for x := rect.Min.X; x < rect.Max.X; x++ {
-// 				page[y][x] = true
-// 			}
-// 		}
-// 	}
-
-// 	// Find all the rectangles in the page that do not overlap with the input rectangles
-// 	var remainingRects []image.Rectangle
-
-// 	for y := 0; y < page.Dy(); y++ {
-// 		for x := 0; x < page.Dx(); x++ {
-
-// 		}
-// 	}
-// 	return nil
-// }
-
 func assembleImageFromRectangles(src image.Image, rects []image.Rectangle) image.Image {
 	if len(rects) == 0 {
 		return src
@@ -261,42 +234,6 @@ func normalizeRGB(red, green, blue uint32) (r, g, b uint8) {
 
 	return r, g, b
 }
-
-// lineDiff returns a slice of points where the line has different colors than the input color.
-// The number of returned points is always even, as points go in pairs.
-// func lineDiff(src image.Image, color color.RGBA, line int, horizontal bool) (points []image.Point) {
-// 	points = []image.Point{}
-// 	// Horizontal line
-// 	if horizontal {
-// 		start := src.Bounds().Max.X
-// 		end := 0
-// 		for i := 0; i < src.Bounds().Dx(); i++ {
-// 			// Get the color of the current pixel
-// 			r, g, b, _ := src.At(i, line).RGBA()
-
-// 			// Normalize the RGBA values to 0-255 range (since RGBA returns a 16-bit value)
-// 			normalizedR, normalizedG, normalizedB := normalizeRGB(r,g,b)
-// 			if normalizedR != color.R || normalizedG != color.G || normalizedB != color.B {
-// 				start = min(start, i)
-// 			}
-// 		}
-// 	} else {
-// 		// Vertical line
-// 		for i := 0; i < src.Bounds().Dy(); i++ {
-// 			// Get the color of the current pixel
-// 			r, g, b, _ := src.At(line, i).RGBA()
-
-// 			// Normalize the RGBA values to 0-255 range (since RGBA returns a 16-bit value)
-// 			normalizedR := uint8(r >> 8)
-// 			normalizedG := uint8(g >> 8)
-// 			normalizedB := uint8(b >> 8)
-// 			if normalizedR != color.R || normalizedG != color.G || normalizedB != color.B {
-
-// 			}
-// 		}
-// 	}
-// 	return points
-// }
 
 func isLineContinuous(src image.Image, color color.RGBA, line int, horizontal bool) bool {
 	// Get image bounds
