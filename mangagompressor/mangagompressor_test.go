@@ -15,7 +15,7 @@ import (
 
 func TestDetecInnerBorders(t *testing.T) {
 
-	rc, _ := os.Open("../test/1.png")
+	rc, _ := os.Open("../test/7.png")
 
 	// if err != nil {
 	// 	return "", fmt.Errorf("failed to open file inside CBZ: %v", err)
@@ -25,15 +25,15 @@ func TestDetecInnerBorders(t *testing.T) {
 	// Decode the image (it could be either PNG or JPEG)
 	var img image.Image
 	img, _ = png.Decode(rc)
-	img, _ = binarizeImage(img, 60)
+	img, _ = binarizeImage(img, 65)
 	rects := detectInnerBorders(img)
-	// for _, rect := range rects {
-	// 	img = removeRectangle(img, rect, color.RGBA{255, 0, 0, 255})
-	// }
+	for _, rect := range rects {
+		img = removeRectangle(img, rect, color.RGBA{255, 0, 0, 150})
+	}
 
 	remaining := getRemainingRectangles(img, rects)
 	for _, rect := range remaining {
-		img = removeRectangle(img, rect, color.RGBA{255, 0, 0, 255})
+		img = removeRectangle(img, rect, color.RGBA{0, 255, 0, 150})
 	}
 	fmt.Println(remaining)
 	// img = assembleImageFromRectangles(img, remaining)

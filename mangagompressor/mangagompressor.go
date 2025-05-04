@@ -36,6 +36,16 @@ func binarizeImage(img image.Image, thresholdPercentage int) (image.Image, error
 	return newImage, nil
 }
 
+func copyImage(src image.Image) image.RGBA {
+	img := image.NewRGBA(image.Rect(0, 0, src.Bounds().Dx(), src.Bounds().Dy()))
+	for y := 0; y < img.Bounds().Dy(); y++ {
+		for x := 0; x < img.Rect.Dx(); x++ {
+			img.Set(x, y, src.At(x, y))
+		}
+	}
+	return *img
+}
+
 // cropImage takes an image and a rectangle, and returns a new image cropped to that rectangle.
 func cropImage(src image.Image, rect image.Rectangle) image.Image {
 	// Create a new RGBA image to store the cropped image
@@ -81,26 +91,6 @@ func removeRectangle(src image.Image, rect image.Rectangle, background color.Col
 
 	return newImage
 }
-
-// // removeRectangles takes an image and an array of rectangles and returns a new image
-// // with the specified rectangles removed, where the remaining areas are packed together.
-// func removeRectangles(img image.Image, rects []image.Rectangle) image.Image {
-// 	tables := []image.Rectangle{}
-
-// 	for y := 0; y < img.Bounds().Dy(); y++ {
-// 		for x := 0; x < img.Bounds().Dx(); x++ {
-// 			// Check if the pixel is inside any of the rectangles
-// 			inRect := false
-// 			for _, rect := range rects {
-// 				if rect.Min.X <= x && x < rect.Max.X && rect.Min.Y <= y && y < rect.Max.Y {
-// 					inRect = true
-// 					break
-// 				}
-// 			}
-// 		}
-// 	}
-// 	return img
-// }
 
 // getRemainingRectangles takes an image and an array of rectangles, and returns a list
 // of rectangles that are not covered by the input rectangles. The remaining rectangles
@@ -159,6 +149,33 @@ func getRemainingRectangles(img image.Image, rects []image.Rectangle) []image.Re
 	return remainingRects
 }
 
+// func subtractRectangles1(src image.Image, rects []image.Rectangle) []image.Rectangle {
+// 	// Create a matrix that represents the image.
+// 	page := make([][]bool, src.Bounds().Dy())
+// 	for i := range page {
+// 		page[i] = make([]bool, src.Bounds().Dx())
+// 	}
+
+// 	// Add the rectangles to the page
+// 	for _, rect := range rects {
+// 		for y := rect.Min.Y; y < rect.Max.Y; y++ {
+// 			for x := rect.Min.X; x < rect.Max.X; x++ {
+// 				page[y][x] = true
+// 			}
+// 		}
+// 	}
+
+// 	// Find all the rectangles in the page that do not overlap with the input rectangles
+// 	var remainingRects []image.Rectangle
+
+// 	for y := 0; y < page.Dy(); y++ {
+// 		for x := 0; x < page.Dx(); x++ {
+
+// 		}
+// 	}
+// 	return nil
+// }
+
 func assembleImageFromRectangles(src image.Image, rects []image.Rectangle) image.Image {
 	if len(rects) == 0 {
 		return src
@@ -181,8 +198,8 @@ func assembleImageFromRectangles(src image.Image, rects []image.Rectangle) image
 	y := 0
 	fmt.Println(len(rects))
 	for _, rect := range rects {
-		for i := rect.Min.Y; i < rect.Min.Y + rect.Dy(); i++ {
-			for j := rect.Min.X; j < rect.Min.X + rect.Dx(); j++ {
+		for i := rect.Min.Y; i < rect.Min.Y+rect.Dy(); i++ {
+			for j := rect.Min.X; j < rect.Min.X+rect.Dx(); j++ {
 				newImage.Set(x, y, src.At(j, i))
 				// fmt.Printf("img: (%d,%d) -- src: (%d,%d)\n", x, y, j, i)
 				x += 1
@@ -236,6 +253,51 @@ func detectOuterBorder(img image.Image) image.Rectangle {
 	return image.Rect(xmin, ymin, xmax, ymax)
 }
 
+func normalizeRGB(red, green, blue uint32) (r, g, b uint8) {
+	// Normalize the RGBA values to 0-255 range (since RGBA returns a 16-bit value)
+	r = uint8(r >> 8)
+	g = uint8(g >> 8)
+	b = uint8(b >> 8)
+
+	return r, g, b
+}
+
+// lineDiff returns a slice of points where the line has different colors than the input color.
+// The number of returned points is always even, as points go in pairs.
+// func lineDiff(src image.Image, color color.RGBA, line int, horizontal bool) (points []image.Point) {
+// 	points = []image.Point{}
+// 	// Horizontal line
+// 	if horizontal {
+// 		start := src.Bounds().Max.X
+// 		end := 0
+// 		for i := 0; i < src.Bounds().Dx(); i++ {
+// 			// Get the color of the current pixel
+// 			r, g, b, _ := src.At(i, line).RGBA()
+
+// 			// Normalize the RGBA values to 0-255 range (since RGBA returns a 16-bit value)
+// 			normalizedR, normalizedG, normalizedB := normalizeRGB(r,g,b)
+// 			if normalizedR != color.R || normalizedG != color.G || normalizedB != color.B {
+// 				start = min(start, i)
+// 			}
+// 		}
+// 	} else {
+// 		// Vertical line
+// 		for i := 0; i < src.Bounds().Dy(); i++ {
+// 			// Get the color of the current pixel
+// 			r, g, b, _ := src.At(line, i).RGBA()
+
+// 			// Normalize the RGBA values to 0-255 range (since RGBA returns a 16-bit value)
+// 			normalizedR := uint8(r >> 8)
+// 			normalizedG := uint8(g >> 8)
+// 			normalizedB := uint8(b >> 8)
+// 			if normalizedR != color.R || normalizedG != color.G || normalizedB != color.B {
+
+// 			}
+// 		}
+// 	}
+// 	return points
+// }
+
 func isLineContinuous(src image.Image, color color.RGBA, line int, horizontal bool) bool {
 	// Get image bounds
 	bounds := src.Bounds()
@@ -275,7 +337,7 @@ func isLineContinuous(src image.Image, color color.RGBA, line int, horizontal bo
 	}
 
 	// This statement takes care of some random pixel
-	if lineCounter >= 10 {
+	if lineCounter >= 20 {
 		// fmt.Println("LineCount: ", lineCounter)
 		return false
 	}
@@ -304,11 +366,10 @@ func detectInnerBorders(src image.Image) []image.Rectangle {
 			ymin = min(ymin, y)
 		} else {
 			// If ymin < y, the rectangle has broken. So append the rectangle to rects and reassign ymin to height
-			// if ymin < y && (y-ymin) > 3 {
-			if ymin < y {
+			if ymin < y && (y-ymin) > 15 {
 				rects = append(rects, image.Rect(0, ymin, width, y))
-				ymin = height
 			}
+			ymin = height
 		}
 	}
 
@@ -324,11 +385,10 @@ func detectInnerBorders(src image.Image) []image.Rectangle {
 			ymin = min(ymin, y)
 		} else {
 			// If ymin < y, the rectangle has broken. So append the rectangle to rects and reassign ymin to height
-			// if ymin < y && (y-ymin) > 3 {
-			if ymin < y {
+			if ymin < y && (y-ymin) > 15 {
 				rects = append(rects, image.Rect(ymin, 0, y, height))
-				ymin = width
 			}
+			ymin = width
 		}
 	}
 
@@ -400,6 +460,7 @@ func rgbaToGray(src image.Image) image.Image {
 
 	// Iterate through each pixel in the original image
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
 			// Get the color of the pixel at (x, y) in the RGBA image
 			rgbaColor := src.At(x, y)
@@ -421,12 +482,12 @@ func rgbaToGray(src image.Image) image.Image {
 	return grayImage
 }
 
-func compressPNG(src image.Image, thresholdPercentage int) (image.Image, error) {
+func compressPNG(src image.Image, binThreshold, resizeWidth, resizeHeight, max_inner_rects, min_content int) (image.Image, error) {
+	img := src
 
-	// Binarize the image
-	img, err := binarizeImage(src, thresholdPercentage)
-	if err != nil {
-		return nil, fmt.Errorf("failed to binarize image: %v", err)
+	if binThreshold >= 0 {
+		// Binarize the image
+		img, _ = binarizeImage(src, binThreshold)
 	}
 
 	// outerBorder := detectOuterBorder(img)
@@ -438,19 +499,29 @@ func compressPNG(src image.Image, thresholdPercentage int) (image.Image, error) 
 	// 	img = removeRectangle(img, rect, color.RGBA{255, 0, 0, 255})
 	// }
 
-	content := getRemainingRectangles(img, innerBorders)
-	img = assembleImageFromRectangles(img, content)
+	if len(innerBorders) < max_inner_rects {
+		content := getRemainingRectangles(img, innerBorders)
+		// sometimes the algorithm fails and this makes sure the original image is used.
+		content_area := 0
+		for _, rect := range content {
+			content_area += rect.Dx() * rect.Dy()
+		}
+		if float32(content_area) > float32(min_content/100*resizeWidth*resizeHeight) {
+			img = assembleImageFromRectangles(img, content)
+		}
+	}
 
 	if img.Bounds().Dx() > img.Bounds().Dy() {
 		img = rotateImage(img)
 	}
 
-	img = resizeImage(img, 1236, 1648)
+	img = resizeImage(img, resizeWidth, resizeHeight)
 	return img, nil
 }
 
 // ProcessCBZFile processes each image inside a CBZ file, binarizes it, and returns a list of modified image data.
-func ProcessCBZFile(cbzPath string, thresholdPercentage int, outputDir string) (string, error) {
+func ProcessCBZFile(cbzPath string, binThreshold int, resizeWidth int, resizeHeight, max_inner_rects int,
+	min_content_percent int, outputDir string) (string, error) {
 	// Create a temporary folder to store the modified images
 	tempDir, err := os.MkdirTemp(outputDir, "binarized_")
 	if err != nil {
@@ -490,7 +561,7 @@ func ProcessCBZFile(cbzPath string, thresholdPercentage int, outputDir string) (
 		var img image.Image
 		if strings.HasSuffix(file.Name, ".png") {
 			img, err = png.Decode(rc)
-			img, err = compressPNG(img, thresholdPercentage)
+			img, err = compressPNG(img, binThreshold, resizeWidth, resizeHeight, max_inner_rects, min_content_percent)
 		} else if strings.HasSuffix(file.Name, ".jpg") || strings.HasSuffix(file.Name, ".jpeg") {
 			img, err = jpeg.Decode(rc)
 			img = rgbaToGray(img)
